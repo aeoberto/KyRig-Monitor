@@ -43,8 +43,8 @@ char auth[] = " "; //Blynk Token
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = " "; //wifi network
-char pass[] = " "; //password network
+char ssid[] = " "; //Wi-fi network
+char pass[] = " "; //Wi-fi password
 
 WidgetTerminal terminal(V1);
 
