@@ -1,0 +1,375 @@
+
+#define BLYNK_PRINT Serial
+
+const char json_request[] =  "{\"id\":0,\"jsonrpc\":\"2.0\",\"method\":\"miner_getstat1\"}";
+
+char* json = "{\"result\":[\"9.3 - ETH\",\"21\",\"182724;51;0\",\"30502;30457;30297;30481;30479;30505\",\"0;0;0\",\"off;off;off;off;off;off\",\"53;71;57;67;61;72;55;70;59;71;61;70\",\"eth-eu1.nanopool.org:9999\",\"0;0;0;0\"]}";
+
+String result0_1,result1_1,result2_1,result3_1,result4_1,result5_1,result6_1,result7_1,result8_1;
+
+int ETH_hashrates[28], ETH_data[3], DCR_data[3], flag_miner_on_off [10];
+
+String data,var,var0,var1,var2,host_miner,miner_name,miner_port,address_miner;
+
+int data0,index7,counter4=0,allminers=4,
+httpPort_miner,miner_id,total_ETH,total_SMART,minername,minerport,mineraddress,newminer,counterminer=1;
+
+String miner_address[]={"router9aoberto.tplinkdns.com:8001","rminingk.ddns.net:8002","router9aoberto.tplinkdns.com:8003",
+"rminingk.ddns.net:8004"}, data_miner[20];
+
+String  data1 [10];
+
+unsigned long time1;
+
+//char host_miner [] = "rminingk.ddns.net";
+//int httpPort_miner = 8004;
+
+#include <ArduinoJson.h>
+#include <ESP8266mDNS.h>
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+#include <ArduinoOTA.h>
+#include <ESP8266HTTPUpdateServer.h>
+#include <ESP8266WebServer.h>
+#include <BlynkSimpleEsp8266.h>
+#include <SPI.h>
+#include <WiFiUdp.h>
+
+const char* host = "esp8266"; // will be "esp8266.local/update" in web browser
+ESP8266WebServer httpServer(80);
+ESP8266HTTPUpdateServer httpUpdater;
+
+// You should get Auth Token in the Blynk App.
+// Go to the Project Settings (nut icon).
+char auth[] = "65badd020771475a8ad379ac27643f2c";
+
+// Your WiFi credentials.
+// Set password to "" for open networks.
+char ssid[] = "AObertos_H";
+char pass[] = "1991emgj422     ";
+
+WidgetTerminal terminal(V1);
+
+BLYNK_WRITE(V1)
+{
+  var= param.asStr();
+  if (String("ADD") == var.substring(0,3) && minername == 0) {
+    terminal.println("\n Enter the name of the miner:");
+    minername=1;
+  }
+  else if (minername==1) {
+    miner_name= var;
+    terminal.println(miner_name);
+    terminal.println("\n Enter the IP address of the miner:");
+    mineraddress=1;
+    minername=0;
+  }
+  else if (mineraddress==1) {
+    address_miner= var;
+    terminal.println(address_miner);
+    terminal.println("\n Enter the port of the miner:");
+    minerport=1;
+    mineraddress=0;
+  }
+  else if (minerport==1) {
+    miner_port= var;
+    terminal.println(miner_port);
+    terminal.println("\n The miner was added successfully");
+    newminer=1;
+    minerport=0;
+  }
+   else {
+    // Send it back
+    terminal.print("Invalid Input:");
+    terminal.write(param.getBuffer(), param.getLength());
+    terminal.println();
+  }
+  // Ensure everything is sent
+  terminal.flush();
+}
+
+BlynkTimer timer;
+
+//void TableEvent() {
+//
+//  extract_data1(result2_1);
+//
+//
+//  Blynk.virtualWrite(V2, "add", 1, "miner",ETH_data[0]);
+//}
+//
+void Event1(){
+
+int i3=1;
+int i4=0;
+int miners_sum=0;
+int i5=1;
+int total_ETH = 0;
+int total_SMART = 0;
+int total_GPUs = 0;
+
+//Checking how many miners are active
+  for (int i4 = 0; i4 <= allminers; i4++){
+    miners_sum = miners_sum+ int(flag_miner_on_off[i4+1]);
+  }
+  for (i5=1; i5<=miners_sum; i5++ ){
+   if ( flag_miner_on_off [i3] == 1){
+     data = data1[i3];
+     ParseArray_Miners(data);
+     extract_data1(result2_1);
+     total_ETH = total_ETH + (ETH_data[0]/1000);
+     extract_data2(result4_1);
+     total_SMART = total_SMART + (DCR_data[0]/1000);
+   
+int index1=0;
+int index2=0;
+int index0=0;
+int counter1=0;
+int counter2=0;
+
+    index0= result3_1.lastIndexOf(';'); 
+    while (true){
+      if (counter2==0){
+        index1=result3_1.indexOf(';');
+        counter2=1;
+        counter1= counter1+1;
+      }
+      else if (index1 == index0){
+        counter1= counter1+1;
+        Serial.println (counter1);
+        break;
+      }else{
+        index2 = result3_1.indexOf(';',index1+1);
+        index1= index2;
+        counter1= counter1+1; 
+      }
+    }
+    total_GPUs = total_GPUs+(counter1);
+    i3=i3+1;
+   }else{
+    i3=i3+1;
+    i5=i5-1;
+   }
+  }
+  Serial.println (total_GPUs);
+  Blynk.virtualWrite(V3,"Total ETH: "+ String(total_ETH)+" Mh/s"+ " - SMART: " + String(total_SMART)+" Mh/s" );
+  Blynk.virtualWrite(V4,"Active Miners: "+ String(miners_sum)+"/"+String(allminers)+" - "+"Total GPUs: "+ String(total_GPUs));
+}
+
+void Event2(){
+
+int pin_save_miner=10;
+
+  if (newminer==1){
+    data_miner[counterminer]= miner_name+";"+address_miner+";"+miner_port;
+    pin_save_miner=counterminer+10;
+    Blynk.virtualWrite (V11,data_miner[counterminer]);
+    counterminer=counterminer+1;
+    newminer=0;    
+  }
+}
+
+WidgetLCD lcd(V0);
+
+//void LCD_Event() {
+
+//}
+
+void setup()
+{
+  {
+    Serial.begin(115200);
+    
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(ssid, pass);
+    
+    Blynk.begin(auth, ssid, pass);
+
+    ArduinoOTA.setHostname("Basement_plenum_ESP8266_controller");
+    ArduinoOTA.onStart([]()
+    {
+      Serial.println("Start");
+    });
+    ArduinoOTA.onEnd([]()
+    {
+      Serial.println("\nEnd");
+    });
+    ArduinoOTA.begin();
+    Serial.println("Ready - OTA Success!!!");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    MDNS.begin(host);
+    httpUpdater.setup(&httpServer);
+    httpServer.begin();
+    MDNS.addService("http", "tcp", 80);
+    Serial.printf("HTTPUpdateServer ready! Open http://%s.local/update in your browser\n", host);
+
+// Setup a function to be called every second
+//    timer.setTimeout(200,[](){
+//      timer.setInterval(1000L, TableEvent);
+//    });
+    timer.setTimeout(400,[](){
+      timer.setInterval(2000L, Event2);
+    });
+    timer.setTimeout(800,[](){
+      timer.setInterval(5000L, Event1);
+    });
+
+  }
+}
+
+void loop()
+{
+  Blynk.run();
+  timer.run();
+  ArduinoOTA.handle();
+  httpServer.handleClient();
+
+  if (counter4 != allminers){
+    client_connection();
+  }else{
+    counter4=0;
+  }
+}
+
+void client_connection(){
+
+  index7 = miner_address[counter4].indexOf (':') ;
+  host_miner = miner_address[counter4].substring(0,index7);
+  httpPort_miner = (miner_address[counter4].substring(index7+1)).toInt();
+  miner_id = (miner_address[counter4].substring(index7+4)).toInt();
+
+// Use WiFiClient class to create TCP connections
+  WiFiClient client;
+  if (!client.connect(host_miner, httpPort_miner)) {  
+    counter4=counter4+1;
+    flag_miner_on_off [miner_id]= 0;
+    return;
+  }
+  flag_miner_on_off [miner_id]= 1;
+// This will send the request to the server
+  client.write (json_request);
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.println(">>> Client Timeout !");
+      counter4=counter4+1;
+      client.stop();
+      return;
+    }
+  }
+
+// Read all the lines of the reply from server and print them to Serial
+  while (client.available()) {
+    data1[miner_id] = client.readStringUntil('\r');
+    Serial.print(data1[miner_id]);
+//    data = data1[1];
+//    ParseArray_Miners(data);
+//    extract_data(result3_1);
+//    Serial.println (miner_id);   
+  }  
+
+// Close the connection after the server closes its end
+    client.stop();
+    counter4=counter4+1;
+    return; 
+}
+
+void ParseArray_Miners(String json){
+ 
+    const size_t bufferSize = JSON_ARRAY_SIZE(9) + JSON_OBJECT_SIZE(1) + 190;
+    DynamicJsonBuffer jsonBuffer(bufferSize);    
+    JsonObject& root = jsonBuffer.parseObject(json);
+  if (!root.success()) {   //Check for errors in parsin
+    Serial.println("parseObject() failed");
+    return;
+  }
+
+  JsonArray& result = root["result"];
+  const char* result0 = result[0]; // "9.3 - ETH"
+  const char* result1 = result[1]; // "21"
+  const char* result2 = result[2]; // "182724;51;0"
+  const char* result3 = result[3]; // "30502;30457;30297;30481;30479;30505"
+  const char* result4 = result[4]; // "0;0;0"  
+  const char* result5 = result[5]; // "off;off;off;off;off;off"
+  const char* result6 = result[6]; // "53;71;57;67;61;72;55;70;59;71;61;70"
+  const char* result7 = result[7]; // "eth-eu1.nanopool.org:9999"
+  const char* result8 = result[8]; // "0;0;0;0"
+
+  result0_1 = result0;
+  result1_1 = result1;
+  result2_1 = result2;
+  result3_1 = result3;
+  result4_1 = result4;
+  result5_1 = result5;
+  result6_1 = result6;
+  result7_1 = result7;
+  result8_1 = result8;
+  return;
+}
+
+//Get total ETH hashrate in MH/s, number of ETH shares, number of ETH rejected shares.
+void extract_data1(String var1){
+
+int index3=0;
+int index4=0;
+
+  index3=var1.indexOf(';');
+  index4=var1.indexOf(';',index3+1);
+  ETH_data[0]=var1.substring(0,index3).toInt();
+  ETH_data[1]=var1.substring(index3+1,index4).toInt();
+  ETH_data[2]=var1.substring(index4).toInt();  
+}
+
+//Get total DCR hashrate in MH/s, number of DCR shares, number of DCR rejected shares.
+void extract_data2(String var2){
+int index5=0;
+int index6=0;
+
+  index5=var2.indexOf(';');
+  index6=var2.indexOf(';',index5+1);
+  DCR_data[0]=var2.substring(0,index5).toInt();
+  DCR_data[1]=var2.substring(index5+1,index6).toInt();
+  DCR_data[2]=var2.substring(index6).toInt();  
+}
+
+//Get ETH hashrate, DCR hashrate, Temperatures and Fan speed(%) pairs for all GPUs.
+void extract_data(String var0){
+
+int index1=0;
+int index2=0;
+int index0=0;
+int counter1=0;
+int counter2=0;
+
+    index0= var0.lastIndexOf(';'); 
+    while (true){
+      Serial.println (var0);
+      Serial.println (index0);
+
+      if (counter2==0){
+        index1=var0.indexOf(';');
+        data0=(var0.substring(0,index1)).toInt();
+        ETH_hashrates [counter1]= data0;
+
+        counter2=1;
+        counter1= counter1+1;
+
+      }
+      else if (index1 == index0){
+
+        data0 = (var0. substring(index1+1)).toInt();
+        ETH_hashrates [counter1]= data0;
+        counter1= counter1+1;
+        Serial.println (counter1);
+        break;
+     
+      }else{
+        index2 = var0.indexOf(';',index1+1);
+        data0 = (var0. substring(index1+1,index2)).toInt();
+        ETH_hashrates [counter1]= data0;
+        index1= index2;
+        counter1= counter1+1; 
+      }
+    }
+}
