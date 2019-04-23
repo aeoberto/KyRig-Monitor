@@ -14,8 +14,6 @@ String data,var,var0,var1,var2,host_miner,miner_name,miner_port,address_miner;
 int data0,index7,counter4=0,allminers=4,
 httpPort_miner,miner_id,total_ETH,total_SMART,minername,minerport,mineraddress,newminer,counterminer=1;
 
-String miner_address[]={"router9aoberto.tplinkdns.com:8001","rminingk.ddns.net:8002","router9aoberto.tplinkdns.com:8003",
-"rminingk.ddns.net:8004"}, data_miner[20];
 
 String  data1 [10];
 
