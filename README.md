@@ -1,0 +1,2 @@
+# KyRig-Monitor
+Mining Monitor
