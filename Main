@@ -14,15 +14,13 @@ String data,var,var0,var1,var2,host_miner,miner_name,miner_port,address_miner;
 int data0,index7,counter4=0,allminers=4,
 httpPort_miner,miner_id,total_ETH,total_SMART,minername,minerport,mineraddress,newminer,counterminer=1;
 
-String miner_address[]={"router9aoberto.tplinkdns.com:8001","rminingk.ddns.net:8002","router9aoberto.tplinkdns.com:8003",
-"rminingk.ddns.net:8004"}, data_miner[20];
 
 String  data1 [10];
 
 unsigned long time1;
 
-//char host_miner [] = "rminingk.ddns.net";
-//int httpPort_miner = 8004;
+//char host_miner [] = " "; // miner host
+//int httpPort_miner = ; // miner port
 
 #include <ArduinoJson.h>
 #include <ESP8266mDNS.h>
@@ -41,12 +39,12 @@ ESP8266HTTPUpdateServer httpUpdater;
 
 // You should get Auth Token in the Blynk App.
 // Go to the Project Settings (nut icon).
-char auth[] = "65badd020771475a8ad379ac27643f2c";
+char auth[] = " "; //Blynk Token
 
 // Your WiFi credentials.
 // Set password to "" for open networks.
-char ssid[] = "AObertos_H";
-char pass[] = "1991emgj422     ";
+char ssid[] = " "; //Wi-fi network
+char pass[] = " "; //Wi-fi password
 
 WidgetTerminal terminal(V1);
 
